@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h6><a href="{% url 'account:user_profile' post.user.id %}">{{ post.user.username }}</a> &nbsp|&nbsp {{ post.updated|date:"Y-M-d" }}</h6>
+    <br>
+    <p>&nbsp&nbsp{{ post.body }}</p>
+
+    {% if request.user.id == post.user.id %}
+        <a href="{% url 'post:post_delete' post.id %}" class="btn btn-danger">Delete</a>
+        <a href="{% url 'post:post_update' post.id %}" class="btn btn-info">Update</a>
+    {% endif %}
+
+    <hr>
+
+    {% if request.user.is_authenticated %}
+
+        {% if cant_like %}
+            <a href="{% url 'post:post_unlike' post.id %}" class="btn btn-primary col-md-1">Un Like {{ post.likes_count }}</a>        
+        {% else %}
+            <a href="{% url 'post:post_like' post.id %}" class="btn btn-primary col-md-1">like {{ post.likes_count }}</a>
+        {% endif %}
+        
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Send">
+        </form>
+        <br>
+
+    {% else %}
+        <p class="alert alert-primary">Login to comment</p>
+    {% endif %}
+
+    {% if comments.count == 0 %}
+        <p>No comments yet!</p>
+
+    {% elif comments.count == 1 %}
+        <p>{{ comments.count }} comment</p>
+
+    {% else %}
+        <p>{{ comments.count }} comments</p>
+    {% endif %}
+
+
+
+    {% for comment in comments %}
+        <div class="card bg-dark text-white">
+            <p class="card-header">{{ comment.user }} | {{ comment.created }} ({{ comment.created|timesince }})</p>
+            <p class="card-body">{{ comment.body }}</p>
+
+            {% if request.user.is_authenticated %}
+                <form action="{% url 'post:add_reply' post.id comment.id %}" method="post">
+                    {% csrf_token %}
+                    {{ reply_form.as_p }}
+                    <input type="submit" value="Reply This Comment">
+                </form>
+            {% endif %}
+
+            {% with replies=comment.rcomments.all %}
+                {% for reply in replies %}
+                    <p class="bg-primary p-3 m-2">{{ reply.user }} <br/> {{ reply.body }} </p>
+                {% endfor %}
+            {% endwith %}
+
+        </div>
+        <br>
+    {% empty %}
+        <p>Type the first comment!</p>
+    {% endfor %}
+
+{% endblock content %} 
+    
+{% comment %} 38 {% endcomment %}
